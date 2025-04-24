@@ -170,6 +170,21 @@ export default function InteriorForm() {
                       <span>Add to enamel </span>
                       <span>Add to polish</span>
                       <input type="text" placeholder="side" />
+                      <select name="" id="">
+                        <option value="" disabled>
+                          {" "}
+                          select
+                        </option>
+                        <option value="">Window</option>
+                        <option value="">Gril</option>
+                        <option value="">Both</option>
+                      </select>
+                      <input
+                        type="text"
+                        name=""
+                        placeholder="Enter side"
+                        id=""
+                      />
                     </div>
                   )}
 
@@ -253,6 +268,8 @@ export default function InteriorForm() {
                   <label className="flex items-center gap-2 text-sm text-gray-700">
                     <input
                       type="checkbox"
+                      // placeholder=""
+                      // className=""
                       checked={subtractFromWallFlags[roomIndex] || false}
                       onChange={(e) =>
                         setSubtractFromWallFlags({
