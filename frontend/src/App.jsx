@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-
+import React, { useEffect, useState } from "react";
+import { FaMinusCircle, FaPaintBrush, FaGem } from "react-icons/fa";
+import "./index.css";
 const initialAreas = [
   "Ceiling",
   "Wall-East",
@@ -17,7 +18,8 @@ const defaultRoomNames = ["Hall", "Kitchen", "Dining", "Bedroom"];
 export default function InteriorForm() {
   const [woodFinish, setWoodFinish] = useState({
     enamel: null,
-    polish: null,
+    freshpolish: null,
+    repolish: null,
   });
   const [rooms, setRooms] = useState(
     defaultRoomNames.map((roomName) => ({
@@ -30,19 +32,116 @@ export default function InteriorForm() {
       remarks: "",
     }))
   );
+  const [checkboxValues, setCheckboxValues] = useState({
+    enamel: false,
+    polish: false,
+    less: false,
+  });
   const [subtractFromWallFlags, setSubtractFromWallFlags] = useState({});
-
+  const [roomImages, setRoomImages] = useState({});
   const [newRoomName, setNewRoomName] = useState("");
   const [newSurfaceNames, setNewSurfaceNames] = useState({});
   const [selectedSurfaceNames, setSelectedSurfaceNames] = useState({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const handleRoomChange = (roomIndex, surfaceIndex, key, value) => {
     const updatedRooms = [...rooms];
     updatedRooms[roomIndex].surfaces[surfaceIndex][key] = value;
     setRooms(updatedRooms);
+    setHasUnsavedChanges(true);
   };
 
+  // const handleImageUpload = (roomName, files) => {
+  //   setRoomImages((prev) => ({
+  //     ...prev,
+  //     [roomName]: [...(prev[roomName] || []), ...files],
+  //   }));
+  // };4
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        // Save your data (replace `roomData` with your actual data)
+        localStorage.setItem("unsavedRoomData", JSON.stringify(rooms));
+        localStorage.setItem("unsavedRemarks", JSON.stringify(remarks)); // If applicable
+
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges, rooms]);
+  useEffect(() => {
+    const savedRooms = localStorage.getItem("unsavedRoomData");
+    const savedRemarks = localStorage.getItem("unsavedRemarks");
+
+    if (savedRooms) {
+      const confirmRestore = window.confirm(
+        "You have unsaved changes. Do you want to restore them?"
+      );
+
+      if (confirmRestore) {
+        setRooms(JSON.parse(savedRooms));
+        setHasUnsavedChanges(true);
+
+        if (savedRemarks) {
+          setRemarks(JSON.parse(savedRemarks));
+        }
+      } else {
+        localStorage.removeItem("unsavedRoomData");
+        localStorage.removeItem("unsavedRemarks");
+      }
+    }
+  }, []);
+
+  const handleImageUpload = (roomName, files) => {
+    setRoomImages((prev) => {
+      const existingFiles = prev[roomName] || [];
+
+      // Filter out duplicates
+      const newFiles = files.filter((file) => {
+        console.log("new file");
+        const isDuplicate = existingFiles.some(
+          (existing) =>
+            existing.name === file.name && existing.size === file.size
+        );
+        if (isDuplicate) {
+          console.log("duplicate: ", isDuplicate);
+          window.alert(
+            `Image "${file.name}" already exists in room "${roomName}"`
+          );
+        }
+        return !isDuplicate;
+      });
+
+      return {
+        ...prev,
+        [roomName]: [...existingFiles, ...newFiles],
+      };
+    });
+    setHasUnsavedChanges(true);
+  };
+  const handleCheckboxChange = (key, isChecked) => {
+    setCheckboxValues((prev) => ({ ...prev, [key]: isChecked }));
+
+    if (isChecked) {
+      handleWoodFinish(key, 12); // or any value you want to add
+    }
+  };
+
+  const handleDeleteImage = (roomName, index) => {
+    setHasUnsavedChanges(true);
+    setRoomImages((prev) => {
+      const updatedImages = [...(prev[roomName] || [])];
+      updatedImages.splice(index, 1);
+      return { ...prev, [roomName]: updatedImages };
+    });
+  };
   const handleRemarksChange = (roomIndex, value) => {
+    setHasUnsavedChanges(true);
     const updatedRooms = [...rooms];
     updatedRooms[roomIndex].remarks = value;
     setRooms(updatedRooms);
@@ -65,21 +164,17 @@ export default function InteriorForm() {
     ]);
     setNewRoomName("");
   };
-
+  const handleWoodFinish = (key, value) => {
+    setWoodFinish((prev) => ({
+      ...prev,
+      [key]: (prev[key] || 0) + value,
+    }));
+  };
   const removeRoom = (roomIndex) => {
     const updatedRooms = rooms.filter((_, index) => index !== roomIndex);
     setRooms(updatedRooms);
   };
 
-  // const addSurface = (roomIndex) => {
-  //   const updatedRooms = [...rooms];
-  //   updatedRooms[roomIndex].surfaces.push({
-  //     name: `Surface-${updatedRooms[roomIndex].surfaces.length + 1}`,
-  //     length: "",
-  //     width: "",
-  //   });
-  //   setRooms(updatedRooms);
-  // };
   const addSurface = (roomIndex) => {
     const updatedRooms = [...rooms];
     const name =
@@ -94,6 +189,7 @@ export default function InteriorForm() {
     // Reset the name input after adding
     setNewSurfaceNames({ ...newSurfaceNames, [roomIndex]: "" });
     setRooms(updatedRooms);
+    setHasUnsavedChanges(true);
   };
 
   const removeSurface = (roomIndex, surfaceIndex) => {
@@ -107,6 +203,7 @@ export default function InteriorForm() {
   const calculateArea = (length, width) => {
     const l = parseFloat(length);
     const w = parseFloat(width);
+    // setHasUnsavedChanges(true);
     return isNaN(l) || isNaN(w) ? 0 : l * w;
   };
   const [expandedRooms, setExpandedRooms] = useState({});
@@ -165,25 +262,58 @@ export default function InteriorForm() {
                 >
                   {(surface.name === "Window and grill" ||
                     surface.name === "Door") && (
-                    <div>
-                      <span>Add to less</span>
-                      <span>Add to enamel </span>
-                      <span>Add to polish</span>
-                      <input type="text" placeholder="side" />
-                      <select name="" id="">
-                        <option value="" disabled>
-                          {" "}
-                          select
-                        </option>
-                        <option value="">Window</option>
-                        <option value="">Gril</option>
-                        <option value="">Both</option>
-                      </select>
+                    <div className="flex flex-col gap-3 p-4 border rounded-md">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checkboxValues.less}
+                          onChange={(e) =>
+                            handleCheckboxChange("less", e.target.checked)
+                          }
+                        />
+                        <FaMinusCircle className="text-red-500" />
+                        <span>Add to less</span>
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checkboxValues.enamel}
+                          onChange={(e) =>
+                            handleCheckboxChange("enamel", e.target.checked)
+                          }
+                        />
+                        <FaPaintBrush className="text-blue-500" />
+                        <span>Add to enamel</span>
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checkboxValues.polish}
+                          onChange={(e) =>
+                            handleCheckboxChange("polish", e.target.checked)
+                          }
+                        />
+                        <FaGem className="text-yellow-600" />
+                        <span>Add to polish</span>
+                      </label>
+
+                      {surface.name === "Window and grill" && (
+                        <select className="border px-2 py-1 mt-2">
+                          <option value="" disabled selected>
+                            Select
+                          </option>
+                          <option value="Window">Window</option>
+                          <option value="Grill">Grill</option>
+                          <option value="Both">Both</option>
+                        </select>
+                      )}
+
                       <input
                         type="text"
-                        name=""
                         placeholder="Enter side"
-                        id=""
+                        className="border px-2 py-1 mt-2"
                       />
                     </div>
                   )}
@@ -289,6 +419,40 @@ export default function InteriorForm() {
                   + Add Surface
                 </button>
               </div>
+              <div className="mb-4">
+                <label className="block mb-1 font-medium">
+                  Upload Images for {room.name}
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) =>
+                    handleImageUpload(room.name, Array.from(e.target.files))
+                  }
+                  className="border px-2 py-1"
+                />
+
+                {/* Image previews with delete */}
+                <div className="flex flex-wrap gap-4 mt-2">
+                  {roomImages[room.name]?.map((file, idx) => (
+                    <div key={idx} className="relative">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`${room.name} Image ${idx}`}
+                        className="w-20 h-20 object-cover border rounded"
+                      />
+                      <button
+                        onClick={() => handleDeleteImage(room.name, idx)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-700"
+                        title="Delete"
+                      >
+                        ✖
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <input
                 type="text"
@@ -313,7 +477,7 @@ export default function InteriorForm() {
           return (
             <div key={roomIndex}>
               <span className="font-semibold">{room.name}:</span>{" "}
-              {total.toFixed(2)} sq.ft
+              {total.toFixed(2)} sq.ft walls: celing: enamel: polish:
             </div>
           );
         })}
