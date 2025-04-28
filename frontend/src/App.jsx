@@ -32,6 +32,7 @@ export default function InteriorForm() {
       remarks: "",
     }))
   );
+  console.log("rooms", JSON.stringify(rooms));
   const [checkboxValues, setCheckboxValues] = useState({
     enamel: false,
     polish: false,
@@ -56,7 +57,7 @@ export default function InteriorForm() {
   //     ...prev,
   //     [roomName]: [...(prev[roomName] || []), ...files],
   //   }));
-  // };4
+  // };
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
@@ -88,7 +89,7 @@ export default function InteriorForm() {
         setHasUnsavedChanges(true);
 
         if (savedRemarks) {
-          setRemarks(JSON.parse(savedRemarks));
+          setRooms.remarks(JSON.parse(savedRemarks));
         }
       } else {
         localStorage.removeItem("unsavedRoomData");
@@ -214,6 +215,7 @@ export default function InteriorForm() {
     }));
   };
 
+  // console.log("checkbox values ", JSON.stringify(checkboxValues));
   return (
     <div className="p-4">
       <div className="flex gap-2 mb-4">
