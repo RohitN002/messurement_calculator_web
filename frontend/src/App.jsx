@@ -28,6 +28,7 @@ export default function InteriorForm() {
         name: area,
         length: "",
         width: "",
+        total: "",
       })),
       remarks: "",
     }))
