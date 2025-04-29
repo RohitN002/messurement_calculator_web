@@ -30,6 +30,8 @@ export default function InteriorForm() {
         width: "",
         total: "",
       })),
+      ceilingArea: "",
+      wallsArea: "",
       remarks: "",
     }))
   );
@@ -48,7 +50,20 @@ export default function InteriorForm() {
 
   const handleRoomChange = (roomIndex, surfaceIndex, key, value) => {
     const updatedRooms = [...rooms];
+
+    // Update length or width
     updatedRooms[roomIndex].surfaces[surfaceIndex][key] = value;
+
+    const length =
+      parseFloat(updatedRooms[roomIndex].surfaces[surfaceIndex].length) || 0;
+    const width =
+      parseFloat(updatedRooms[roomIndex].surfaces[surfaceIndex].width) || 0;
+
+    // Always recalculate total area
+    updatedRooms[roomIndex].surfaces[surfaceIndex].total = (
+      length * width
+    ).toFixed(2);
+
     setRooms(updatedRooms);
     setHasUnsavedChanges(true);
   };
@@ -265,7 +280,7 @@ export default function InteriorForm() {
                 >
                   {(surface.name === "Window and grill" ||
                     surface.name === "Door") && (
-                    <div className="flex flex-col gap-3 p-4 border rounded-md">
+                    <div className="flex flex-row gap-3 p-4 border rounded-md">
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -275,7 +290,7 @@ export default function InteriorForm() {
                           }
                         />
                         <FaMinusCircle className="text-red-500" />
-                        <span>Add to less</span>
+                        {/* <span>Add to less</span> */}
                       </label>
 
                       <label className="flex items-center gap-2">
@@ -287,7 +302,7 @@ export default function InteriorForm() {
                           }
                         />
                         <FaPaintBrush className="text-blue-500" />
-                        <span>Add to enamel</span>
+                        {/* <span>Add to enamel</span> */}
                       </label>
 
                       <label className="flex items-center gap-2">
@@ -299,7 +314,7 @@ export default function InteriorForm() {
                           }
                         />
                         <FaGem className="text-yellow-600" />
-                        <span>Add to polish</span>
+                        {/* <span>Add to polish</span> */}
                       </label>
 
                       {surface.name === "Window and grill" && (
@@ -351,7 +366,17 @@ export default function InteriorForm() {
                     className="border px-2 py-1 w-24"
                   />
 
-                  <span>
+                  <span
+                    value={surface.total}
+                    onChange={(e) =>
+                      handleRoomChange(
+                        roomIndex,
+                        surfaceIndex,
+                        "total",
+                        e.target.value
+                      )
+                    }
+                  >
                     Total:{" "}
                     {calculateArea(surface.length, surface.width).toFixed(2)}{" "}
                     sq.ft
