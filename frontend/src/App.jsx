@@ -47,7 +47,7 @@ export default function InteriorForm() {
   const [newSurfaceNames, setNewSurfaceNames] = useState({});
   const [selectedSurfaceNames, setSelectedSurfaceNames] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
+  //check box change logic is pending
   const handleRoomChange = (roomIndex, surfaceIndex, key, value) => {
     const updatedRooms = [...rooms];
 
